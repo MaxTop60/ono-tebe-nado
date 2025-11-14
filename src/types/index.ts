@@ -38,3 +38,11 @@ export interface IBid {
 export interface IOrderResult {
     id: string;
 }
+
+
+// Дописанные типы
+
+export type LotStatusDate = {
+    title: string,
+    subtitle: string
+}

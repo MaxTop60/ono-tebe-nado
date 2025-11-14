@@ -7,6 +7,7 @@ import {EventEmitter} from "./components/base/events";
 import { LotModel } from './components/models/LotModel';
 import { LotListModel } from './components/models/LotListModel';
 import { BidModel } from './components/models/BidModel';
+import { IBid } from './types';
 
 const events = new EventEmitter();
 const api = new AuctionAPI(CDN_URL, API_URL);
@@ -32,6 +33,8 @@ events.onAll(({ eventName, data }) => {
 
 
 async function initializeApp() {
+    console.log("Сиписок лотов: ")
+
     let lotListModel: LotListModel | undefined;
 
     // Получаем лоты с сервера
@@ -46,13 +49,13 @@ async function initializeApp() {
 
 
     const lotList: LotModel[] | undefined = lotListModel?.lots;
-    console.log("Сиписок лотов: ")
     lotList?.forEach(lot => {
         console.log(
             `Title: ${lot.title}\n
             About: ${lot.about}\n
             Image: ${lot.image}\n
             Date: ${lot.getDateTimeMain()}\n
+            Price: ${lot.price}\n
             \n`
         )
     })
@@ -84,11 +87,15 @@ async function initializeApp() {
             Description: ${lot?.description}\n`
         );
 
-        console.log('Сделаем ставку 10000 Р:')
+        const price = 1000;
 
         const bid: BidModel = new BidModel({
-            price: 20000
+            price: price
         }, events);
+
+        console.log(`Сделаем ставку ${bid} Р:`)
+
+
 
         await api.placeBid(lot.id, bid)
             .then(result => {
@@ -98,7 +105,7 @@ async function initializeApp() {
                     console.log(lot.history);
 
                     console.log(
-                        `Сделана ставка ${bid.price}\n
+                        `Сделана ставка ${bid.price} Р\n
                         Новая история ставок: ${lot.history}`
                     )
 

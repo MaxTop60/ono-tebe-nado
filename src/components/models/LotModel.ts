@@ -67,8 +67,8 @@ export class LotModel extends Model<ILot> implements ILot {
         if (value !== this._status) {
             this._status = value;
             this.emitChanges('lot:status:update', {
-                lot_id: this._id,
-                new_status: value
+                id: this._id,
+                status: value
             })
         };
     }
@@ -101,18 +101,8 @@ export class LotModel extends Model<ILot> implements ILot {
         return this._price;
     }
 
-    set price(value: number) {
-        if (value - this._price >= this._minPrice) {
-            this._price = value;
-
-            this.addPriceToHistory(value);
-            
-            this.emitChanges('lot:price:update', {
-                lot_id: this._id,
-                new_price: value,
-                new_history: this._history
-            })
-        }
+    set price(value: number | undefined) {
+        this._price = value;
     }
 
     get formattedPrice(): string {
@@ -129,6 +119,63 @@ export class LotModel extends Model<ILot> implements ILot {
         }
     }
 
+    get statusDateText(): LotStatusDate {
+        let title: string;
+        let subtitle: string;
+
+        const now = new Date();
+        const eventDate = new Date(this._datetime);
+        const diff = eventDate.getTime() - now.getTime();
+
+
+        const formatDate = this.formatDateTimeAuction(diff);
+
+        if (this._status === 'active') {
+            title = formatDate,
+            subtitle = "До закрытия лота"
+        } else if (this._status === 'wait'){
+            title = formatDate,
+            subtitle = "До открытия лота"
+        }
+        else {
+            title = "Аукцион завершён",
+            subtitle = `Продано за ${this.formattedPrice}`
+        }
+
+        return {
+            title: title,
+            subtitle: subtitle
+        }
+    }
+
+    makeBid(value: number) {
+        if (this.checkBid(value) || !value) {
+            this.price = value;
+            this.addPriceToHistory(value);
+            
+            this.emitChanges('lot:price:update', {
+                id: this._id,
+                price: value,
+            })
+        } else {
+            throw("Ставка должна быть выше последней сделанной ставки!");
+        }
+    }
+
+    checkBid(bid: number): boolean {
+        console.log(
+            `Проверка ставки: \n
+            Price: ${this._price} \n
+            Min price: ${this._minPrice} \n
+            Your ptice: ${bid}`
+        )
+        if (bid - this._price >= this._minPrice) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     getDateTimeMain(): string {
         const date = new Date(this._datetime);
 
@@ -141,37 +188,10 @@ export class LotModel extends Model<ILot> implements ILot {
         }
     }
 
-    get statusDateText(): LotStatusDate {
-        let title: string;
-        let subtitle: string;
-
-        const now = new Date();
-        const eventDate = new Date(this._datetime);
-        const diff = eventDate.getTime() - now.getTime();
-
-        if (diff > 0) {
-            const formatDate = this.formatDateTimeAuction(diff);
-
-            if (this._status === 'active') {
-                title = formatDate,
-                subtitle = "До закрытия лота"
-            } else {
-                title = formatDate,
-                subtitle = "До открытия лота"
-            }
-        } else {
-            title = "Аукцион завершён",
-            subtitle = `Продано за ${this.formattedPrice}`
-        }
-
-        return {
-            title: title,
-            subtitle: subtitle
-        }
-    }
-
     private addPriceToHistory(price: number) {
-        this._history.push(price);
+        if (price) {
+            this._history.push(price);
+        }
     }
 
     private formatDateTimeMain(datetime: Date): string {
@@ -203,13 +223,10 @@ export class LotModel extends Model<ILot> implements ILot {
     updateFromAPI(updateData: LotUpdate): void {
         // Обновляем только пришедшие поля
         if (updateData.price !== undefined) {
-            this._price = updateData.price;
+            this.makeBid(updateData.price);
         }
         if (updateData.status !== undefined) {
             this._status = updateData.status;
-        }
-        if (updateData.history !== undefined) {
-            this._history = updateData.history;
         }
         if (updateData.datetime !== undefined) {
             this._datetime = updateData.datetime;

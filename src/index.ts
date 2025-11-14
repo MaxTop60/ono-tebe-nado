@@ -9,6 +9,8 @@ import { LotListModel } from './components/models/LotListModel';
 import { BidModel } from './components/models/BidModel';
 import { IOrder } from './types';
 import { OrderModel } from './components/models/OrderModel';
+import { CardView } from './components/views/CardView';
+import { cloneTemplate, ensureElement } from './utils/utils';
 
 const events = new EventEmitter();
 const api = new AuctionAPI(CDN_URL, API_URL);
@@ -19,12 +21,12 @@ events.onAll(({ eventName, data }) => {
 })
 
 // Все шаблоны
-
+const cardTemplate = ensureElement<HTMLTemplateElement>('#card');
 
 // Модель данных приложения
 
 // Глобальные контейнеры
-
+const catalog = ensureElement<HTMLElement>('main .catalog__items');
 
 // Переиспользуемые части интерфейса
 
@@ -51,16 +53,13 @@ async function initializeApp() {
 
     const lotList: LotModel[] | undefined = lotListModel?.lots;
     lotList?.forEach(lot => {
-        console.log(
-            `
-            Id: ${lot.id}\n
-            Title: ${lot.title}\n
-            About: ${lot.about}\n
-            Image: ${lot.image}\n
-            Date: ${lot.getDateTimeMain()}\n
-            Price: ${lot.price}\n
-            \n`
-        )
+        const card: CardView = new CardView('card', cloneTemplate(cardTemplate));
+        catalog.append(card.render({
+            title: lot.title,
+            about: lot.about,
+            image: lot.image,
+            status: lot.getDateTimeMain()
+        }))
     })
 
     let lot: LotModel | undefined;

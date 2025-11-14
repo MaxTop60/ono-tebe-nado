@@ -3,24 +3,18 @@ import { Model } from "../base/Model";
 import { EventEmitter } from "../base/events";
 import { ILot, LotUpdate } from "../../types";
 
+// Модель списка лотов
 export class LotListModel extends Model<{lots: LotModel[]}> {
-    declare private _lots: LotModel[];
+    declare lots: LotModel[];
 
     constructor(data: ILot[], events: EventEmitter) {
         const lotModels = data.map(lotData => new LotModel(lotData, events));
         super({lots: lotModels}, events);
     }
 
-    get lots(): LotModel[] {
-        return this._lots;
-    }
-
-    set lots(value: LotModel[]) {
-        this._lots = value;
-    }
 
     getLotById(id: string): LotModel | undefined {
-        return this._lots.find(lot => lot.id === id);
+        return this.lots.find(lot => lot.id === id);
     }
 
     updateLot(updateData: LotUpdate): void {

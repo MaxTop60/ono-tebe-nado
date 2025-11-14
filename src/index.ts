@@ -7,7 +7,8 @@ import {EventEmitter} from "./components/base/events";
 import { LotModel } from './components/models/LotModel';
 import { LotListModel } from './components/models/LotListModel';
 import { BidModel } from './components/models/BidModel';
-import { IBid } from './types';
+import { IOrder } from './types';
+import { OrderModel } from './components/models/OrderModel';
 
 const events = new EventEmitter();
 const api = new AuctionAPI(CDN_URL, API_URL);
@@ -51,7 +52,9 @@ async function initializeApp() {
     const lotList: LotModel[] | undefined = lotListModel?.lots;
     lotList?.forEach(lot => {
         console.log(
-            `Title: ${lot.title}\n
+            `
+            Id: ${lot.id}\n
+            Title: ${lot.title}\n
             About: ${lot.about}\n
             Image: ${lot.image}\n
             Date: ${lot.getDateTimeMain()}\n
@@ -113,6 +116,30 @@ async function initializeApp() {
                 } catch (err) {
                     console.error(err)
                 }         
+            })
+
+
+        console.log("Сделаем заказ 3 лота")
+
+        const order_lot_id = "b06cde61-912f-4663-9751-09956c0eed67";
+        
+        const order_data: IOrder = {
+            email: "maxsimtorub@gmail.com",
+            phone: "+79193231232",
+            items: [
+                order_lot_id
+            ]
+        }
+
+        const order: OrderModel = new OrderModel(order_data, events);
+        
+        await api.orderLots(order)
+            .then(result => {
+                console.log(result);
+                console.log("Успешно!");
+            })
+            .catch(err => {
+                console.error(err);
             })
     }
 }
